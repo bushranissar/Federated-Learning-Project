@@ -11,7 +11,7 @@ Features:
 - Raspberry Pi Edge Deployment
 - Multi-Class Tomato Leaf Disease Detection
 - Performance Evaluation using Accuracy, Precision, Recall, F1-Score, and Confusion Matrix
-- 
+
 Client Classes:
 1. Healthy
 2. Bacterial Spot
