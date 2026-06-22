@@ -33,7 +33,8 @@ from evaluation import (
 # CONFIGURATION
 # =====================================================
 
-DATASET_PATH = "/home/fedml/fed_project/client1"
+# Original: DATASET_PATH = "/home/fedml/fed_project/client1"
+DATASET_PATH = "client1"
 
 NUM_CLASSES = 5
 
@@ -857,8 +858,9 @@ try:
 
     fl.client.start_numpy_client(
 
+        # Original: server_address = "10.143.202.174:8080"
         server_address=
-        "10.143.202.174:8080",
+        "127.0.0.1:8080",
 
         client=
         FlowerClient()

@@ -94,7 +94,8 @@ strategy = FedAvg(
 
     fraction_fit=1.0,
 
-    fraction_evaluate=2.0,
+    # Original: fraction_evaluate=2.0
+    fraction_evaluate=1.0,
 
     min_fit_clients=2,
 
