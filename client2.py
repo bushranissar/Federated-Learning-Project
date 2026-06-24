@@ -251,6 +251,10 @@ client2_f1_history = []
 client2_cnn_accuracy_history = []
 client2_svm_accuracy_history = []
 
+client2_cnn_loss_history = []
+
+client2_confusion_matrix_history = []
+
 # =====================================================
 # CNN + SVM TRAINING
 # =====================================================
@@ -555,6 +559,10 @@ def evaluate_local(
         svm_accuracy
     )
 
+    client2_confusion_matrix_history.append(
+        results["confusion_matrix"]
+    )
+
     # =====================================
     # Print Standard Metrics
     # =====================================
@@ -664,17 +672,6 @@ class FlowerClient(
 
         train()
 
-        current_round = (
-            len(
-                client2_accuracy_history
-            )
-            + 1
-        )
-
-        results = evaluate_local(
-            current_round
-        )
-
         return (
 
             self.get_parameters(
@@ -685,37 +682,7 @@ class FlowerClient(
                 train_dataset
             ),
 
-            {
-
-                "accuracy":
-                float(
-                    results[
-                        "accuracy"
-                    ]
-                ),
-
-                "precision":
-                float(
-                    results[
-                        "precision"
-                    ]
-                ),
-
-                "recall":
-                float(
-                    results[
-                        "recall"
-                    ]
-                ),
-
-                "f1":
-                float(
-                    results[
-                        "f1_score"
-                    ]
-                )
-
-            }
+            {}
 
         )
 
@@ -830,7 +797,10 @@ def save_client_metrics():
         client2_recall_history,
 
         "F1":
-        client2_f1_history
+        client2_f1_history,
+
+        "Confusion_Matrix":
+        [cm.tolist() for cm in client2_confusion_matrix_history]
 
     }
 
@@ -847,6 +817,93 @@ def save_client_metrics():
         "\nMetrics Saved : "
         "client2_metrics.csv"
     )
+
+
+# =====================================================
+# SAVE PLOTS
+# =====================================================
+
+def save_client_plots():
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import numpy as np
+    import os
+
+    os.makedirs("plots", exist_ok=True)
+
+    if not client2_accuracy_history:
+        print("No data to plot.")
+        return
+
+    rounds = list(range(1, len(client2_accuracy_history) + 1))
+
+    # ====== PLOT 1: Accuracy Comparison (CNN, SVM, Ensemble) ======
+    plt.figure(figsize=(10, 6))
+    plt.plot(rounds, client2_cnn_accuracy_history, marker='o', linewidth=2, label='CNN', color='blue')
+    plt.plot(rounds, client2_svm_accuracy_history, marker='s', linewidth=2, label='SVM', color='green')
+    plt.plot(rounds, client2_accuracy_history, marker='^', linewidth=2, label='Ensemble', color='red')
+    plt.xlabel("Round", fontsize=12)
+    plt.ylabel("Accuracy", fontsize=12)
+    plt.title("Client2 - CNN vs SVM vs Ensemble Accuracy", fontsize=14)
+    plt.legend(fontsize=11)
+    plt.grid(True, alpha=0.3)
+    plt.ylim(0, 1.05)
+    plt.tight_layout()
+    plt.savefig("plots/client2_accuracy_comparison.png", dpi=150)
+    plt.close()
+    print("Saved: plots/client2_accuracy_comparison.png")
+
+    # ====== PLOT 2: Loss vs Round ======
+    plt.figure(figsize=(10, 6))
+    plt.plot(rounds, client2_loss_history, marker='o', linewidth=2, color='red', markersize=8)
+    plt.xlabel("Round", fontsize=12)
+    plt.ylabel("Loss", fontsize=12)
+    plt.title("Client2 - Loss vs Round", fontsize=14)
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig("plots/client2_loss_vs_round.png", dpi=150)
+    plt.close()
+    print("Saved: plots/client2_loss_vs_round.png")
+
+    # ====== PLOT 3: Precision, Recall, F1-Score ======
+    if client2_precision_history and client2_recall_history and client2_f1_history:
+        plt.figure(figsize=(10, 6))
+        plt.plot(rounds, client2_precision_history, marker='o', linewidth=2, label='Precision', color='blue')
+        plt.plot(rounds, client2_recall_history, marker='s', linewidth=2, label='Recall', color='green')
+        plt.plot(rounds, client2_f1_history, marker='^', linewidth=2, label='F1-Score', color='red')
+        plt.xlabel("Round", fontsize=12)
+        plt.ylabel("Score", fontsize=12)
+        plt.title("Client2 - Precision, Recall, F1-Score", fontsize=14)
+        plt.legend(fontsize=11)
+        plt.grid(True, alpha=0.3)
+        plt.ylim(0, 1.05)
+        plt.tight_layout()
+        plt.savefig("plots/client2_metrics.png", dpi=150)
+        plt.close()
+        print("Saved: plots/client2_metrics.png")
+
+    # ====== PLOT 4: Confusion Matrix (Final Round) ======
+    if client2_confusion_matrix_history:
+        cm = client2_confusion_matrix_history[-1]
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(
+            cm,
+            annot=True,
+            fmt='d',
+            cmap='Blues',
+            xticklabels=CLASS_NAMES,
+            yticklabels=CLASS_NAMES
+        )
+        plt.xlabel('Predicted Label', fontsize=12)
+        plt.ylabel('True Label', fontsize=12)
+        plt.title('Client2 Confusion Matrix (Final Round)', fontsize=14)
+        plt.tight_layout()
+        plt.savefig("plots/client2_confusion_matrix.png", dpi=150)
+        plt.close()
+        print("Saved: plots/client2_confusion_matrix.png")
+
+    print("\nClient2 Graphs Saved Successfully!")
 
 
 # =====================================================
@@ -868,3 +925,5 @@ try:
 finally:
 
     save_client_metrics()
+
+    save_client_plots()
